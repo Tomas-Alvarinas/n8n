@@ -1,0 +1,153 @@
+{
+  "name": "Carga RAG - Vector Store",
+  "nodes": [
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        336,
+        192
+      ],
+      "id": "38fb0258-1ba3-4e57-81b7-5a848fcb1ba3",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "9zL4XNxX5dwh9Td9",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "63e5649a-d79b-4b73-812b-f54a333d18aa",
+      "name": "Trigger - Llamado por Workflow Principal"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a62e4528-a5ff-41af-9690-b55b161b56b9",
+              "name": "text",
+              "value": "Protocolo Manchester Triage System. Nivel 1 CRITICO: dolor en el pecho con irradiacion al brazo izquierdo, dificultad respiratoria severa, perdida de consciencia, sudoracion fria. Atencion inmediata menos de 10 minutos. Nivel 2 MODERADO: fiebre alta mayor a 39 grados, dolor abdominal intenso, fracturas, heridas con sangrado activo. Atencion en menos de 30 minutos. Nivel 3 LEVE: heridas superficiales, dolor leve, consultas generales, fiebre baja. Atencion en menos de 2 horas. Nivel 4 REVISION: casos ambiguos, informacion insuficiente, pacientes que no pueden describir sintomas claramente.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "2dc572d4-3ef2-4d60-9db3-c70b071f2ab2",
+      "name": "Protocolo Manchester (Texto RAG)"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "memoryKey": {
+          "__rl": true,
+          "mode": "list",
+          "value": "vector_store_key"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "531d63e6-fffd-4dff-b94f-c26ed5c0afaa",
+      "name": "Simple Vector Store — Insertar Protocolo"
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{$json.text}}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        512,
+        192
+      ],
+      "id": "c9696be4-d30e-44a1-a31a-b44bc6744ae4",
+      "name": "Data Loader — Texto del Protocolo"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Simple Vector Store — Insertar Protocolo",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger - Llamado por Workflow Principal": {
+      "main": [
+        [
+          {
+            "node": "Protocolo Manchester (Texto RAG)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Protocolo Manchester (Texto RAG)": {
+      "main": [
+        [
+          {
+            "node": "Simple Vector Store — Insertar Protocolo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Loader — Texto del Protocolo": {
+      "ai_document": [
+        [
+          {
+            "node": "Simple Vector Store — Insertar Protocolo",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "fc05d733-069a-4967-ad0e-7fa9284e012b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0fdc6e8e77a3e6a13d5ac8119dc8951bac47de36ad41517ae3f7c553ff90cf86"
+  },
+  "id": "15G6fohSDuozhO5q",
+  "tags": []
+}
