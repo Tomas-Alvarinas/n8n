@@ -1,0 +1,1720 @@
+{
+  "name": "Proyecto Final Curso IA Automation Avanzado",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c61641ec-6cc3-4676-9428-58262e3a4138",
+              "name": "paciente_id",
+              "value": "={{ $('Trigger - POST/triaje').item.json.body.paciente_id }}",
+              "type": "string"
+            },
+            {
+              "id": "0eb4d639-5906-44ec-a7e2-e4b1a98683d7",
+              "name": "nombre",
+              "value": "={{ $('Trigger - POST/triaje').item.json.body.nombre }}",
+              "type": "string"
+            },
+            {
+              "id": "2353e6f0-27ed-4dff-8626-8a2b69c44033",
+              "name": "edad",
+              "value": "={{ $('Trigger - POST/triaje').item.json.body.edad }}",
+              "type": "string"
+            },
+            {
+              "id": "1e153150-8997-4be3-9d08-4f41d180d565",
+              "name": "sintomas",
+              "value": "={{ $('Trigger - POST/triaje').item.json.body.sintomas }}",
+              "type": "string"
+            },
+            {
+              "id": "b6e729a6-d4b5-4e91-82c2-7e7ddb127434",
+              "name": "imagen_url",
+              "value": "={{ $('Trigger - POST/triaje').item.json.body.imagen_url }}",
+              "type": "string"
+            },
+            {
+              "id": "8a992f7d-478e-4daf-a52e-ccc514e60657",
+              "name": "doc_base64",
+              "value": "={{ $('Trigger - POST/triaje').item.json.body.doc_base64 }}",
+              "type": "string"
+            },
+            {
+              "id": "250924ca-3eae-4d2f-ad80-678f7fadd972",
+              "name": "canal_origen",
+              "value": "={{ $('Trigger - POST/triaje').item.json.body.canal_origen }}",
+              "type": "string"
+            },
+            {
+              "id": "d1149276-3459-4e1f-82ec-013adf754d8d",
+              "name": "timestamp_ingreso",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            },
+            {
+              "id": "c72271a5-0818-4da0-8a7c-e4c5553e7583",
+              "name": "audio_url",
+              "value": "={{ $('Trigger - POST/triaje').item.json.body.audio_url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -192,
+        0
+      ],
+      "id": "8ed7aa82-9644-4199-b59d-9baac8a68f00",
+      "name": "Extraer Campos del Paciente"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        192
+      ],
+      "id": "29024045-1035-4775-afc6-3ed73b74ef08",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "9zL4XNxX5dwh9Td9",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-embedding-001"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        464
+      ],
+      "id": "8dce3701-b41c-4ef6-ade9-80432500b470",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "9zL4XNxX5dwh9Td9",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Sos un LLM Judge médico experto. Tu rol es evaluar si la clasificación de triaje es clínicamente correcta. Respondé SOLO con este JSON sin comillas triples:\n{\"veredicto\": \"APROBADO|RECHAZADO|REVISAR\", \"confianza\": 0.95, \"justificacion\": \"justificacion breve\"}\n\nCriterios:\n- APROBADO: clasificación coherente con los síntomas y el protocolo Manchester\n- RECHAZADO: hay inconsistencias graves entre síntomas y clasificación\n- REVISAR: falta información o el caso es ambiguo\n\nEvaluá esta clasificación:\nPaciente: {{ $json.nombre }}, {{ $json.edad }} años\nSíntomas: {{ $json.sintomas }}\nUrgencia asignada: {{ $json.ia_urgencia }}\nDiagnóstico: {{ $json.ia_diagnostico }}\nConfianza IA: {{ $json.ia_confianza }}\nJustificación IA: {{ $json.ia_justificacion }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        2272,
+        -384
+      ],
+      "id": "96f04ffe-e8f8-4058-a204-672385cc5460",
+      "name": "LLM Judge",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "9zL4XNxX5dwh9Td9",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "triaje",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -624,
+        0
+      ],
+      "id": "4469fb1c-644c-4582-b641-a928d7e67686",
+      "name": "Trigger - POST/triaje",
+      "webhookId": "261240ad-1964-48ee-9476-8ab5c89919f8"
+    },
+    {
+      "parameters": {
+        "path": "feedback",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -656,
+        432
+      ],
+      "id": "df8dd812-2579-446c-8633-c9da1fe9b8af",
+      "name": "Trigger - GET / HITL",
+      "webhookId": "e552a31e-be80-4730-85ba-c98c42fd2f6c"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "15G6fohSDuozhO5q",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/15G6fohSDuozhO5q",
+          "cachedResultName": "Carga RAG - Vector Store"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -416,
+        0
+      ],
+      "id": "368bf3d7-42ca-4dd1-adbf-a015eaf40f54",
+      "name": "Cargar RAG en Vector Store"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "83ad0dde-b4a2-4f53-b46b-12c33ce07e0d",
+              "leftValue": "={{ $json.audio_url }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        208
+      ],
+      "id": "aa0ca68a-9a26-41f7-b707-8cb19f53a21c",
+      "name": "IF - ¿Tiene Audio?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d9c21309-fde8-49f8-b103-43b395f715b9",
+              "leftValue": "={{ $json.imagen_url }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        -176
+      ],
+      "id": "c6553afd-7a13-44d8-b1ee-d33f42f3649a",
+      "name": "IF - ¿Tiene Imagen?"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "Analizá esta imagen medica y describí en detalle lo que observás. Identificá: tipo de lesion o condicion visible, severidad aparente, area del cuerpo afectada y cualquier signo de alarma. Sé preciso y usa terminologia medica.",
+        "imageUrls": "={{ $json.imagen_url }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        192,
+        -368
+      ],
+      "id": "9d7a666a-c694-4354-85a5-f864b5ee44f1",
+      "name": "Gemini - Analizar Imagen",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "9zL4XNxX5dwh9Td9",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "Transcribí y analizá este audio médico. Identificá: síntomas mencionados por el paciente, nivel de dolor o malestar expresado, duración de los síntomas y cualquier información relevante para el triaje hospitalario.",
+        "audioUrls": "={{ $json.audio_url }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        176,
+        16
+      ],
+      "id": "b7e1fd35-dd73-4f7d-bbd6-ee7ae97b0037",
+      "name": "Gemini - Analizar Audio",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "9zL4XNxX5dwh9Td9",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const fullResponse = items[0].json.content.parts[0].text;\nconst paciente = $('Extraer Campos del Paciente').first().json;\n\nreturn [{\n  json: {\n    ...paciente,\n    sintomas: 'ANALISIS DE IMAGEN MEDICA:\\n' + fullResponse.replace(/\\*+/g, '').replace(/#+/g, '').replace(/\\n{3,}/g, '\\n\\n').trim().substring(0, 800)\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        -384
+      ],
+      "id": "723b5fca-b425-45ec-b942-dee373f7eae1",
+      "name": "Extraer analisis de Imagen"
+    },
+    {
+      "parameters": {
+        "jsCode": "const fullResponse = items[0].json.content.parts[0].text;\nconst paciente = $('Extraer Campos del Paciente').first().json;\n\n// Extraer solo la transcripcion limpia\nlet transcripcion = fullResponse;\nconst match = fullResponse.match(/[\"\"](.+?)[\"\"]/s);\nif (match) {\n  transcripcion = match[1].trim();\n}\n\nreturn [{\n  json: {\n    ...paciente,\n    sintomas: 'Audio: ' + transcripcion\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "bcf6fd62-62b4-4ebb-89dd-ffd1058299d1",
+      "name": "Extraer analisis de Audio"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        960,
+        -32
+      ],
+      "id": "b916ac37-b5a9-4528-a262-39b7f5097850",
+      "name": "Merge - Consolidar modalidades"
+    },
+    {
+      "parameters": {
+        "jsCode": "const paciente = items.reduce((prev, curr) => {\n  const prevLen = (prev.json.sintomas || '').length;\n  const currLen = (curr.json.sintomas || '').length;\n  return currLen > prevLen ? curr : prev;\n}).json;\n\nreturn [{ json: paciente }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1136,
+        -16
+      ],
+      "id": "a3cdadec-e6ff-40dc-a8ff-0d2ab5aa692f",
+      "name": "Seleccionar Datos Enriquecidos"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Sos un sistema experto de triaje hospitalario basado en el Manchester Triage System.\n\nPACIENTE:\nNombre: {{ $json.nombre }}\nEdad: {{ $json.edad }}\nSintomas: {{ $json.sintomas }}\n\nUsando el contexto medico disponible, clasificá este caso y respondé SOLO con este JSON sin comillas triples ni texto adicional:\n{\"urgencia\": \"CRITICO|MODERADO|LEVE|REVISION\", \"diagnostico\": \"diagnostico presuntivo\", \"especialidad\": \"especialidad recomendada\", \"confianza\": 0.95, \"justificacion\": \"justificacion clinica breve\"}\n\nCuando recibas un ANALISIS DE IMAGEN MEDICA, clasificá según la severidad descripta en el análisis usando los mismos criterios del Manchester Triage System.\n\nIMPORTANTE: respondé SOLO con el objeto JSON puro, sin comillas triples, sin bloques de codigo, sin texto antes ni despues.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1376,
+        -16
+      ],
+      "id": "c408b0df-2ffe-4dc2-855e-19799b08b155",
+      "name": "AI Agent - Triaje (Gemini + RAG)",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Base de conocimiento medica con protocolos del Manchester Triage System. Usala para clasificar casos de triaje hospitalario.",
+        "memoryKey": {
+          "__rl": true,
+          "mode": "list",
+          "value": "vector_store_key"
+        },
+        "topK": 3
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.3,
+      "position": [
+        1440,
+        368
+      ],
+      "id": "8a3f8e8d-c878-42d1-a10e-bf1b83de2ff6",
+      "name": "RAG - Vector Store"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "be05edf4-7791-47a2-a5bd-41c2fe922f2c",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1776,
+        320
+      ],
+      "id": "1e629c42-b136-40bb-b6e3-0d45d1458c1f",
+      "name": "IF - Error en AI Agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = items[0].json.output;\nconst start = raw.indexOf('{');\nconst end = raw.lastIndexOf('}');\nconst jsonString = raw.substring(start, end + 1);\n\nlet clasificacion;\ntry {\n  clasificacion = JSON.parse(jsonString);\n} catch(e) {\n  clasificacion = {\n    urgencia: 'REVISION',\n    diagnostico: 'Error de parseo',\n    especialidad: 'General',\n    confianza: 0,\n    justificacion: 'No se pudo parsear la respuesta de la IA'\n  };\n}\n\nconst paciente = $('Seleccionar Datos Enriquecidos').first().json;\n\nreturn [{\n  json: {\n    ...paciente,\n    ia_urgencia: clasificacion.urgencia,\n    ia_diagnostico: clasificacion.diagnostico,\n    ia_especialidad: clasificacion.especialidad,\n    ia_confianza: clasificacion.confianza,\n    ia_justificacion: clasificacion.justificacion,\n    timestamp_procesamiento: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1888,
+        -32
+      ],
+      "id": "b59ac43d-43fa-4c92-a337-28b7bcaed95a",
+      "name": "Parsear Clasificacion del Agent",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ed6194d5-a669-4de1-99cb-622dffabaaec",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2016,
+        160
+      ],
+      "id": "fa0279da-29d9-419f-8f53-a1b12c486ef9",
+      "name": "IF - Error en Parseo"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4add485d-a070-448f-a756-59cceab76090",
+              "leftValue": "={{ $json.ia_confianza }}",
+              "rightValue": 0.75,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            },
+            {
+              "id": "ed6d1e88-875b-4003-b3d4-1a7e9fa79c47",
+              "leftValue": "={{ $json.ia_urgencia }}",
+              "rightValue": "CRITICO",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2144,
+        -48
+      ],
+      "id": "0c39fb84-7869-4d8f-95af-bdf2f3ea54b0",
+      "name": "IF - ¿Activar LLM Judge?"
+    },
+    {
+      "parameters": {
+        "sendTo": "tomi.alva1@gmail.com",
+        "subject": "=🔴 Error en workflow de triaje - {{ $json.error.message }}",
+        "message": "=Se produjo un error en el workflow de triaje hospitalario.\n\nError: {{ $json.error?.message || $json.error || 'Error desconocido' }}\nPaciente ID: {{ $json.paciente_id || 'desconocido' }}\nNombre: {{ $json.nombre || 'desconocido' }}\nTimestamp: {{ new Date().toISOString() }}\n\nPor favor revisar el sistema.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2272,
+        304
+      ],
+      "id": "3df74f81-9687-4bbf-8f68-153d1f6cfff0",
+      "name": "Gmail - Error en AI Agent",
+      "webhookId": "39a48eae-eacc-4867-bec2-743e1ebbe3f5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Z0qOyKhwWkzfP4P7",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = items[0].json.message?.content || items[0].json.content?.parts?.[0]?.text || items[0].json.text || '';\n\nconst start = raw.indexOf('{');\nconst end = raw.lastIndexOf('}');\nconst jsonString = raw.substring(start, end + 1);\n\nlet judge;\ntry {\n  judge = JSON.parse(jsonString);\n} catch(e) {\n  judge = {\n    veredicto: 'REVISAR',\n    confianza: 0,\n    justificacion: 'Error al parsear veredicto del Judge'\n  };\n}\n\nconst paciente = $('Seleccionar Datos Enriquecidos').first().json;\n\nreturn [{\n  json: {\n    ...paciente,\n    judge_veredicto: judge.veredicto,\n    judge_confianza: judge.confianza,\n    judge_justificacion: judge.justificacion,\n    judge_timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2672,
+        -400
+      ],
+      "id": "18d06893-dec0-4616-a639-14ad87af2fb7",
+      "name": "Parsear veredicto del Judge",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b27bbc4c-9dea-4b11-8d7c-7265021f29f2",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2960,
+        -384
+      ],
+      "id": "9bf74110-6b94-414a-b8e0-562ee49c45bf",
+      "name": "IF - ¿Error en Judge?"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.ia_urgencia }}",
+                    "rightValue": "CRITICO",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "573e2fae-8586-48e9-b1cc-130c04020e3e"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "CRITICO"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "0c85d483-9845-4e64-9092-f80ee5e2c9a7",
+                    "leftValue": "={{ $json.ia_urgencia }}",
+                    "rightValue": "MODERADO",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "MODERADO"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c52bb861-ac7c-4543-bcd6-b2d78123287c",
+                    "leftValue": "={{ $json.ia_urgencia }}",
+                    "rightValue": "LEVE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "LEVE"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "829927e9-43f1-43f4-92ab-9add4813fe5e",
+                    "leftValue": "={{ $json.ia_urgencia }}",
+                    "rightValue": "REVISION",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "REVISION"
+            }
+          ]
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2752,
+        -64
+      ],
+      "id": "4e4e89bf-c53d-40c5-be96-d94b7a1cc8cf",
+      "name": "Switch - Nivel de Urgencia"
+    },
+    {
+      "parameters": {
+        "sendTo": "tomi.alva1@gmail.com",
+        "subject": "=🚨 CASO CRITICO - {{ $json.nombre }} - {{ $json.ia_diagnostico }}",
+        "message": "=ALERTA DE TRIAJE - CASO CRITICO  Paciente: {{ $json.nombre }} Edad: {{ $json.edad }} años ID: {{ $json.paciente_id }} Canal: {{ $json.canal_origen }}  CLASIFICACION IA: Urgencia: {{ $json.ia_urgencia }} Diagnostico: {{ $json.ia_diagnostico }} Especialidad: {{ $json.ia_especialidad }} Confianza: {{ $json.ia_confianza }} Justificacion: {{ $json.ia_justificacion }}  Sintomas reportados: {{ $json.sintomas }} Timestamp ingreso: {{ $json.timestamp_ingreso }} Timestamp procesamiento: {{ $json.timestamp_procesamiento }}  Este caso requiere atencion inmediata. Por favor valide la clasificacion.\n\nPara validar esta clasificacion, responda haciendo clic en uno de estos links:\n\nCORRECTO: http://localhost:5678/webhook/feedback?caso={{ $json.paciente_id }}&resultado=correcto&urgencia={{ $json.ia_urgencia }}\n\nINCORRECTO: http://localhost:5678/webhook/feedback?caso={{ $json.paciente_id }}&resultado=incorrecto&urgencia={{ $json.ia_urgencia }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        3280,
+        -176
+      ],
+      "id": "b9b28309-cd8a-4dbd-90ea-d48db6a51180",
+      "name": "Gmail — Alerta CRITICO (HITL)",
+      "webhookId": "ea22d61a-dfc7-43a4-92ba-f05974511417",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Z0qOyKhwWkzfP4P7",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "sendTo": "tomi.alva1@gmail.com",
+        "subject": "=📋 Nuevo caso {{ $json.ia_urgencia }} - {{ $json.nombre }} - {{ $json.ia_especialidad }}",
+        "message": "=NOTIFICACION DE TRIAJE  Paciente: {{ $json.nombre }} Edad: {{ $json.edad }} años ID: {{ $json.paciente_id }} Canal: {{ $json.canal_origen }}  CLASIFICACION IA: Urgencia: {{ $json.ia_urgencia }} Diagnostico: {{ $json.ia_diagnostico }} Especialidad: {{ $json.ia_especialidad }} Confianza: {{ $json.ia_confianza }} Justificacion: {{ $json.ia_justificacion }}  Sintomas reportados: {{ $json.sintomas }} Timestamp ingreso: {{ $json.timestamp_ingreso }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        3280,
+        64
+      ],
+      "id": "b614725f-613a-4fea-ad32-de38ff675d36",
+      "name": "Gmail — Notificacion MODERADO/LEVE",
+      "webhookId": "20b8440a-f8f8-47ad-9d38-3da0010a0125",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Z0qOyKhwWkzfP4P7",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "sendTo": "tomi.alva1@gmail.com",
+        "subject": "=⚠️ CASO REQUIERE REVISION HUMANA - {{ $json.nombre }}",
+        "message": "=REVISION REQUERIDA - CLASIFICACION INCIERTA  Paciente: {{ $json.nombre }} Edad: {{ $json.edad }} años ID: {{ $json.paciente_id }}  La IA no pudo clasificar este caso con suficiente confianza. Confianza obtenida: {{ $json.ia_confianza }} Diagnostico tentativo: {{ $json.ia_diagnostico }} Justificacion: {{ $json.ia_justificacion }}  Sintomas reportados: {{ $json.sintomas }}  Por favor revise manualmente este caso.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        3264,
+        304
+      ],
+      "id": "923eb8f9-8d82-4fe8-8a8e-04687f37a11f",
+      "name": "Gmail — Revision Manual Requerida",
+      "webhookId": "f115c8dd-5ac1-4cb8-980c-2a3fc6c3a9b8",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Z0qOyKhwWkzfP4P7",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "eee79800-145a-4201-8737-ac03dff66f2c",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3472,
+        -96
+      ],
+      "id": "eba2e3e6-9093-4447-abe3-79fdb107ebf7",
+      "name": "IF — ¿Error en Gmail CRITICO?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "eee79800-145a-4201-8737-ac03dff66f2c",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3472,
+        144
+      ],
+      "id": "b8ef4175-9787-4eaf-83bd-a47fd0b8f74c",
+      "name": "IF — ¿Error en Gmail Moderado?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "eee79800-145a-4201-8737-ac03dff66f2c",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3504,
+        384
+      ],
+      "id": "7dbb4a69-b978-4710-b50d-88411c02417e",
+      "name": "IF — ¿Error en Gmail Revision?"
+    },
+    {
+      "parameters": {
+        "sendTo": "tomi.alva1@gmail.com",
+        "subject": "=🔴 Error en workflow de triaje - {{ $json.error.message }}",
+        "message": "=Se produjo un error en el workflow de triaje hospitalario.\n\nError: {{ $json.error?.message || $json.error || 'Error desconocido' }}\nPaciente ID: {{ $json.paciente_id || 'desconocido' }}\nNombre: {{ $json.nombre || 'desconocido' }}\nTimestamp: {{ new Date().toISOString() }}\n\nPor favor revisar el sistema.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        3248,
+        -400
+      ],
+      "id": "192a834f-6912-4fde-8ca8-3b2078417d62",
+      "name": "Gmail — Error en Judge",
+      "webhookId": "39a48eae-eacc-4867-bec2-743e1ebbe3f5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Z0qOyKhwWkzfP4P7",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "tomi.alva1@gmail.com",
+        "subject": "=🔴 Error en workflow de triaje - {{ $json.error.message }}",
+        "message": "=Se produjo un error en el workflow de triaje hospitalario.  Nodo: Question and Answer Chain Error: {{ $json.error.message }} Paciente ID: {{ $json.paciente_id }} Timestamp: {{ new Date().toISOString() }}  Por favor revisar el sistema.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        4144,
+        192
+      ],
+      "id": "1c2436e7-d915-48ae-8b58-10ea390f0e75",
+      "name": "Gmail — Error en Gmail/Sheets",
+      "webhookId": "39a48eae-eacc-4867-bec2-743e1ebbe3f5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Z0qOyKhwWkzfP4P7",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1zSyOWmLN61Nreyywq9xHGuiLfWCMbuwVlaQuT0rF2lk",
+          "mode": "list",
+          "cachedResultName": "TP Final Coder Avanzado",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zSyOWmLN61Nreyywq9xHGuiLfWCMbuwVlaQuT0rF2lk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hoja 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zSyOWmLN61Nreyywq9xHGuiLfWCMbuwVlaQuT0rF2lk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp_ingreso": "={{ $('Parsear Clasificacion del Agent').item.json.timestamp_ingreso }}",
+            "timestamp_procesamiento": "={{ $('Parsear Clasificacion del Agent').item.json.timestamp_procesamiento }}",
+            "paciente_id": "={{ $('Parsear Clasificacion del Agent').item.json.paciente_id }}",
+            "nombre": "={{ $('Parsear Clasificacion del Agent').item.json.nombre }}",
+            "edad": "={{ $('Parsear Clasificacion del Agent').item.json.edad }}",
+            "canal_origen": "={{ $('Parsear Clasificacion del Agent').item.json.canal_origen }}",
+            "sintomas": "={{ $('Parsear Clasificacion del Agent').item.json.sintomas }}",
+            "ia_urgencia": "={{ $('Parsear Clasificacion del Agent').item.json.ia_urgencia }}",
+            "ia_diagnostico": "={{ $('Parsear Clasificacion del Agent').item.json.ia_diagnostico }}",
+            "ia_especialidad": "={{ $('Parsear Clasificacion del Agent').item.json.ia_especialidad }}",
+            "ia_confianza": "={{ $('Parsear Clasificacion del Agent').item.json.ia_confianza }}",
+            "ia_justificacion": "={{ $('Parsear Clasificacion del Agent').item.json.ia_justificacion }}",
+            "judge_veredicto": "={{ $('Parsear veredicto del Judge').first().json.judge_veredicto }}",
+            "judge_confianza": "={{ $('Parsear veredicto del Judge').first().json.judge_confianza }}",
+            "judge_justificacion": "={{ $('Parsear veredicto del Judge').first().json.judge_justificacion }}"
+          },
+          "matchingColumns": [
+            "timestamp_ingreso"
+          ],
+          "schema": [
+            {
+              "id": "timestamp_ingreso",
+              "displayName": "timestamp_ingreso",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "timestamp_procesamiento",
+              "displayName": "timestamp_procesamiento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "paciente_id",
+              "displayName": "paciente_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "edad",
+              "displayName": "edad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "canal_origen",
+              "displayName": "canal_origen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sintomas",
+              "displayName": "sintomas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ia_urgencia",
+              "displayName": "ia_urgencia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ia_diagnostico",
+              "displayName": "ia_diagnostico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ia_especialidad",
+              "displayName": "ia_especialidad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ia_confianza",
+              "displayName": "ia_confianza",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ia_justificacion",
+              "displayName": "ia_justificacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "judge_veredicto",
+              "displayName": "judge_veredicto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "judge_confianza",
+              "displayName": "judge_confianza",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "judge_justificacion",
+              "displayName": "judge_justificacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        4144,
+        -16
+      ],
+      "id": "5badb3f4-9d8d-48b1-862f-70bf0d7c331c",
+      "name": "Google Sheets — Log Triaje",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2mL4rX0KrRK4BDDn",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1zSyOWmLN61Nreyywq9xHGuiLfWCMbuwVlaQuT0rF2lk",
+          "mode": "list",
+          "cachedResultName": "TP Final Coder Avanzado",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zSyOWmLN61Nreyywq9xHGuiLfWCMbuwVlaQuT0rF2lk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1986292721,
+          "mode": "list",
+          "cachedResultName": "Feedback_Medico",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zSyOWmLN61Nreyywq9xHGuiLfWCMbuwVlaQuT0rF2lk/edit#gid=1986292721"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "caso_id": "={{ $json.query.caso }}",
+            "resultado": "={{ $json.query.resultado }}",
+            "urgencia_ia": "={{ $json.query.urgencia }}",
+            "timestamp_feedback": "={{ new Date().toISOString() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "caso_id",
+              "displayName": "caso_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "resultado",
+              "displayName": "resultado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "urgencia_ia",
+              "displayName": "urgencia_ia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp_feedback",
+              "displayName": "timestamp_feedback",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -448,
+        432
+      ],
+      "id": "02700d55-8ba5-4b0e-8f33-06cede9f33fa",
+      "name": "Google Sheets — Log Feedback Medico",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9TsY8ch0xMDgkAwZ",
+          "name": "Google Sheets account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Extraer Campos del Paciente": {
+      "main": [
+        [
+          {
+            "node": "IF - ¿Tiene Audio?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "IF - ¿Tiene Imagen?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Triaje (Gemini + RAG)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "RAG - Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Judge": {
+      "main": [
+        [
+          {
+            "node": "Parsear veredicto del Judge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger - POST/triaje": {
+      "main": [
+        [
+          {
+            "node": "Cargar RAG en Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger - GET / HITL": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets — Log Feedback Medico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cargar RAG en Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Extraer Campos del Paciente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - ¿Tiene Audio?": {
+      "main": [
+        [
+          {
+            "node": "Gemini - Analizar Audio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge - Consolidar modalidades",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "IF - ¿Tiene Imagen?": {
+      "main": [
+        [
+          {
+            "node": "Gemini - Analizar Imagen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge - Consolidar modalidades",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Gemini - Analizar Imagen": {
+      "main": [
+        [
+          {
+            "node": "Extraer analisis de Imagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini - Analizar Audio": {
+      "main": [
+        [
+          {
+            "node": "Extraer analisis de Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer analisis de Imagen": {
+      "main": [
+        [
+          {
+            "node": "Merge - Consolidar modalidades",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer analisis de Audio": {
+      "main": [
+        [
+          {
+            "node": "Merge - Consolidar modalidades",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge - Consolidar modalidades": {
+      "main": [
+        [
+          {
+            "node": "Seleccionar Datos Enriquecidos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seleccionar Datos Enriquecidos": {
+      "main": [
+        [
+          {
+            "node": "AI Agent - Triaje (Gemini + RAG)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Triaje (Gemini + RAG)": {
+      "main": [
+        [
+          {
+            "node": "Parsear Clasificacion del Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF - Error en AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RAG - Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent - Triaje (Gemini + RAG)",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Error en AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Error en AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parsear Clasificacion del Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear Clasificacion del Agent": {
+      "main": [
+        [
+          {
+            "node": "IF - ¿Activar LLM Judge?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF - Error en Parseo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Error en Parseo": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Error en AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF - ¿Activar LLM Judge?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - ¿Activar LLM Judge?": {
+      "main": [
+        [
+          {
+            "node": "LLM Judge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Switch - Nivel de Urgencia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear veredicto del Judge": {
+      "main": [
+        [
+          {
+            "node": "Switch - Nivel de Urgencia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF - ¿Error en Judge?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - ¿Error en Judge?": {
+      "main": [
+        [
+          {
+            "node": "Gmail — Error en Judge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Switch - Nivel de Urgencia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch - Nivel de Urgencia": {
+      "main": [
+        [
+          {
+            "node": "Gmail — Alerta CRITICO (HITL)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail — Notificacion MODERADO/LEVE",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail — Notificacion MODERADO/LEVE",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gmail — Revision Manual Requerida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail — Alerta CRITICO (HITL)": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets — Log Triaje",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF — ¿Error en Gmail CRITICO?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail — Notificacion MODERADO/LEVE": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets — Log Triaje",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF — ¿Error en Gmail Moderado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail — Revision Manual Requerida": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets — Log Triaje",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF — ¿Error en Gmail Revision?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF — ¿Error en Gmail CRITICO?": {
+      "main": [
+        [
+          {
+            "node": "Gmail — Error en Gmail/Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Google Sheets — Log Triaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF — ¿Error en Gmail Moderado?": {
+      "main": [
+        [
+          {
+            "node": "Gmail — Error en Gmail/Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Google Sheets — Log Triaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF — ¿Error en Gmail Revision?": {
+      "main": [
+        [
+          {
+            "node": "Gmail — Error en Gmail/Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Google Sheets — Log Triaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "33eb0076-ca11-4f04-9f07-d5cb72bc2702",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0fdc6e8e77a3e6a13d5ac8119dc8951bac47de36ad41517ae3f7c553ff90cf86"
+  },
+  "id": "TC3bjXiPoxIqcXcu",
+  "tags": []
+}
